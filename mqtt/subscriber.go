@@ -28,8 +28,8 @@ type Subscriber struct {
 func (s *Subscriber) getForwardHandler() func(mqtt.Client, mqtt.Message) {
 	return func(_ mqtt.Client, msg mqtt.Message) {
 		s.msgChannel <- Message{
-			Topic:    msg.Topic(),
-			Playload: string(msg.Payload()),
+			Topic:   msg.Topic(),
+			Payload: string(msg.Payload()),
 		}
 		log.Println("Subscriber pushed message into channel")
 	}

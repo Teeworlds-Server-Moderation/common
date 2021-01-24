@@ -64,8 +64,8 @@ func (p *Publisher) Publish(msg interface{}) {
 		// if it's not a message type, you can simply
 		// send it to the default topic
 		p.msgChannel <- Message{
-			Topic:    p.topic,
-			Playload: msg,
+			Topic:   p.topic,
+			Payload: msg,
 		}
 	default:
 		log.Panicf("Invalid type: %T", msg)
@@ -88,8 +88,8 @@ func (p *Publisher) PublishTo(topic string, msg interface{}) {
 		// if it's not a message type, you can simply send it to the default
 		// topic
 		p.msgChannel <- Message{
-			Topic:    topic,
-			Playload: m,
+			Topic:   topic,
+			Payload: m,
 		}
 	default:
 		log.Panicf("Invalid type: %T", msg)
@@ -139,7 +139,7 @@ func NewPublisher(address, clientID, topic string) (*Publisher, error) {
 	go func() {
 		for msg := range publisher.msgChannel {
 			topic := msg.Topic
-			payload := msg.Playload
+			payload := msg.Payload
 
 			if token := publisher.client.Publish(topic, 1, false, payload); token.Wait() && token.Error() != nil {
 				log.Println("Publisher could not send message to", publisher.address, "on topic", publisher.topic)
