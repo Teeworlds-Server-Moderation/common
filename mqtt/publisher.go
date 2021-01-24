@@ -52,15 +52,15 @@ func (p *Publisher) Publish(msg interface{}) {
 		log.Println("Publish skipped, channel closed:", msg)
 		return
 	}
-	if p.topic == "" {
-		log.Panicln("Trying to publish a message to an empty topic string.")
-	}
 
 	switch m := msg.(type) {
 	case Message:
 		// if it's a message, you can explicity control the topic
 		p.msgChannel <- m
 	default:
+		if p.topic == "" {
+			log.Panicln("Trying to publish a message to an empty topic string.")
+		}
 		// if it's not a message type, you can simply
 		// send it to the default topic
 		p.msgChannel <- Message{
@@ -77,15 +77,15 @@ func (p *Publisher) PublishTo(topic string, msg interface{}) {
 		log.Println("Publish skipped, channel closed:", msg)
 		return
 	}
-	if topic == "" {
-		log.Panicln("Trying to publish a message to an empty topic string.")
-	}
 
 	switch m := msg.(type) {
 	case Message:
 		// if it's a message, you can explicity control the topic
 		p.msgChannel <- m
 	default:
+		if topic == "" {
+			log.Panicln("Trying to publish a message to an empty topic string.")
+		}
 		// if it's not a message type, you can simply
 		// send it to the default topic
 		p.msgChannel <- Message{
