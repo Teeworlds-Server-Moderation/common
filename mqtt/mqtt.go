@@ -13,6 +13,7 @@ const (
 )
 
 var (
+	// Debug for debug log messages
 	Debug = false
 )
 

@@ -60,15 +60,13 @@ func (p *Publisher) Publish(msg interface{}) {
 	case Message:
 		// if it's a message, you can explicity control the topic
 		p.msgChannel <- m
-	case string, []byte, int, int64, float32, float64, bool:
+	default:
 		// if it's not a message type, you can simply
 		// send it to the default topic
 		p.msgChannel <- Message{
 			Topic:   p.topic,
-			Payload: msg,
+			Payload: toString(m),
 		}
-	default:
-		log.Panicf("Invalid type: %T", msg)
 	}
 	log.Println("Publisher pushed message into channel:", msg)
 }
@@ -84,15 +82,16 @@ func (p *Publisher) PublishTo(topic string, msg interface{}) {
 	}
 
 	switch m := msg.(type) {
-	case string, []byte, int, int64, float32, float64, bool:
-		// if it's not a message type, you can simply send it to the default
-		// topic
+	case Message:
+		// if it's a message, you can explicity control the topic
+		p.msgChannel <- m
+	default:
+		// if it's not a message type, you can simply
+		// send it to the default topic
 		p.msgChannel <- Message{
 			Topic:   topic,
-			Payload: m,
+			Payload: toString(m),
 		}
-	default:
-		log.Panicf("Invalid type: %T", msg)
 	}
 	log.Println("Publisher pushed message into channel:", msg)
 }
@@ -144,7 +143,7 @@ func NewPublisher(address, clientID, topic string) (*Publisher, error) {
 			if token := publisher.client.Publish(topic, 1, false, payload); token.Wait() && token.Error() != nil {
 				log.Println("Publisher could not send message to", publisher.address, "on topic", publisher.topic)
 			} else {
-				log.Println("Published message at broker:", msg)
+				log.Printf("Published message at broker on topic %s: %s", topic, payload)
 			}
 		}
 	}()
