@@ -103,7 +103,7 @@ func NewPublisher(address, clientID, topic string) (*Publisher, error) {
 
 	publisher := &Publisher{
 		address:    address,
-		clientID:   clientID + topic,
+		clientID:   clientID + "-publisher-" + topic,
 		topic:      topic,
 		client:     nil,
 		msgChannel: make(chan Message, 64),

@@ -48,7 +48,7 @@ func (s *Subscriber) Close() {
 			s.client.Disconnect(1000)
 		}
 		close(s.msgChannel)
-		log.Println("Closed subscriber with address: ", s.address, " and topics: ", strings.Join(s.topics, ","), " with ID: ", s.clientID)
+		log.Println("Closed subscriber with address: ", s.address, " and topics: ", strings.Join(s.topics, ", "), " with ID: ", s.clientID)
 	})
 }
 
@@ -71,7 +71,7 @@ func NewSubscriber(address, clientID string, topics ...string) (*Subscriber, err
 	}
 	subscriber := &Subscriber{
 		address:    address,
-		clientID:   clientID,
+		clientID:   clientID + "-subscriber",
 		topics:     topics,
 		client:     nil,
 		msgChannel: make(chan Message, 64),
