@@ -6,26 +6,40 @@ const (
 
 	// FROM SERVERS
 
-	// HEARTBEAT to find new services(?)
-	TypeDiscoveryHeartBeat = "HEARTBEAT"
-
-	// TypePlayerJoin is an event that is created by a monitor when a player joins a server
-	TypePlayerJoin = "event:PLAYER_JOIN"
-	// TypePlayerLeave is created when a player leaves the server
-	TypePlayerLeave = "event:PLAYER_LEAVE"
-	// TypeKickvoteStart is created when a kickvote is started
-	TypeKickvoteStart = "event:KICKVOTE_START"
-	// TypeSpecvoteStart is created when a specvote is started,
+	// TypePlayerJoined is an event that is created by a monitor when a player joins a server
+	TypePlayerJoined = "EVENT:PLAYER_JOIN"
+	// TypePlayerLeft is created when a player leaves the server
+	TypePlayerLeft = "EVENT:PLAYER_LEAVE"
+	// TypeVoteKickStarted is created when a kickvote is started
+	TypeVoteKickStarted = "EVENT:KICKVOTE_START"
+	// TypeVoteSpecStarted is created when a specvote is started,
 	// trying to move a player to the spectators
-	TypeSpecvoteStart = "event:SPECVOTE_START"
-	// TypeChatMessage is created when some chat message is written by someone
-	TypeChatMessage = "event:CHAT_MESSAGE"
-	// TypeWhisperMessage is created when someone whispers to someone else
-	TypeWhisperMessage = "event:WHISPER_MESSAGE"
-	// TypeTeamchatMessage is created when someone writes in the teamchat
-	TypeTeamchatMessage = "event:TEAMCHAT_MESSAGE"
+	TypeVoteSpecStarted = "EVENT:SPECVOTE_START"
+	// TypeChat is created when some chat message is written by someone
+	TypeChat = "EVENT:CHAT_ALL"
+	// TypeChatWhisper is created when someone whispers to someone else
+	TypeChatWhisper = "EVENT:CHAT_WHISPER"
+	// TypeChatTeam is created when someone writes in the teamchat
+	TypeChatTeam = "EVENT:CHAT_TEAM"
+	// TypeChatServer is created when the server sends a message or someone talks via rcon.
+	TypeChatServer = "EVENT:CHAT_SERVER"
+	// TypePlayerMuted is created when a player is muted by either the server or an admin/moderator
+	TypePlayerMuted = "EVENT:PLAYER_MUTED"
+	// TypePlayerKicked is created when someone is kicked from the server.
+	TypePlayerKicked = "EVENT:PLAYER_KICKED"
+	// TypePlayerBanned is created when someone is banned from the server.
+	TypePlayerBanned = "EVENT:PLAYER_BANNED"
+	// TypePlayerVoteBanned is created when a player receives a voteban from an admin/moderator.
+	TypePlayerVoteBanned = "EVENT_PLAYER_VOTEBANNED"
+	// TypeAuthEcon is created when someone logs into econ.
+	TypeAuthEcon = "EVENT:AUTH_ECON"
+	// TypeAuthRcon is created when a player logs into the rcon.
+	TypeAuthRcon = "EVENT:AUTH_RCON"
+	// TypePlayerDied is created when a player killed another player
+	TypePlayerDied = "EVENT:PLAYER_DIED"
 
 	// TO SERVERS
-	// TypeExecCommand is used to forward command execution requests to the Teeworlds servers
-	TypeExecCommand = "event:EXEC_COMMAND"
+
+	// TypeCommandExec is used to forward command execution requests to the Teeworlds servers
+	TypeCommandExec = "EVENT:COMMAND_EXEC"
 )

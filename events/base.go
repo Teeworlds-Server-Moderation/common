@@ -8,9 +8,10 @@ type BaseEvent struct {
 	Type string `json:"type,omitempty"`
 
 	// Source server address:port that has created the event
-	// Every server has its own topic that it is listening on, which is called
+	// Every server has its own topic that it is listening on, where
+	// server
 	// This is usually "<econ ip>:<econ port>"
-	Source string `json:"source,omitempty"`
+	EventSource string `json:"event_source,omitempty"`
 
 	// When was the event created
 	Timestamp string `json:"timestamp,omitempty"`
