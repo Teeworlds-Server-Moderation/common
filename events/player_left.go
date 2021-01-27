@@ -10,6 +10,7 @@ import (
 type PlayerLeftEvent struct {
 	BaseEvent
 	dto.Player
+	Reason string `json:"reason,omitempty"`
 }
 
 // Marshal creates a json string from the current struct
