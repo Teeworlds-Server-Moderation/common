@@ -9,8 +9,8 @@ import (
 // VoteSpecStartedEvent is created when somone starts a kickvote
 type VoteSpecStartedEvent struct {
 	BaseEvent
-	Voter  dto.Player `json:"voter,omitempty"`
-	Victim dto.Player `json:"victim,omitempty"`
+	Source dto.Player `json:"source,omitempty"`
+	Target dto.Player `json:"target,omitempty"`
 	Try    bool       `json:"try,omitempty"`
 	Reason string     `json:"reason,omitempty"`
 	Forced bool       `json:"forced,omitempty"`
