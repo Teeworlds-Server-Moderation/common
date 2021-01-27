@@ -15,6 +15,8 @@ const (
 	// TypeVoteSpecStarted is created when a specvote is started,
 	// trying to move a player to the spectators
 	TypeVoteSpecStarted = "EVENT:SPECVOTE_START"
+	// TypeVoteOptionStarted is created when a player for example start a map vote
+	TypeVoteOptionStarted = "EVENT:OPTIONVOTE_START"
 	// TypeChat is created when some chat message is written by someone
 	TypeChat = "EVENT:CHAT_ALL"
 	// TypeChatWhisper is created when someone whispers to someone else
