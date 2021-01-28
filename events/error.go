@@ -7,7 +7,7 @@ import (
 // ErrorEvent is returned when some errors occur in between specific states
 type ErrorEvent struct {
 	BaseEvent
-	Error string `json:"error, omitempty"`
+	Error string `json:"error,omitempty"`
 }
 
 // Marshal creates a json string from the current struct
