@@ -2,7 +2,6 @@ package mqtt
 
 import (
 	"log"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -63,23 +62,18 @@ func (s *Subscriber) Next() <-chan Message {
 // a string channel that can be
 // address has the format: tcp://localhost:1883
 func NewSubscriber(address, clientID string, topics ...string) (*Subscriber, error) {
-	if Debug {
-		mqtt.ERROR = log.New(os.Stdout, "[ERROR] ", 0)
-		mqtt.CRITICAL = log.New(os.Stdout, "[CRITICAL] ", 0)
-		mqtt.WARN = log.New(os.Stdout, "[WARN]  ", 0)
-		mqtt.DEBUG = log.New(os.Stdout, "[DEBUG] ", 0)
-	}
+	clientID = uniqueClientID(clientID)
 	subscriber := &Subscriber{
 		address:    address,
-		clientID:   uniqueClientID(clientID),
+		clientID:   clientID,
 		topics:     topics,
 		client:     nil,
 		msgChannel: make(chan Message, 64),
 	}
 
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker(subscriber.address)
-	opts.SetClientID(subscriber.clientID)
+	opts.AddBroker(address)
+	opts.SetClientID(clientID)
 	opts.SetKeepAlive(10 * time.Second)
 	opts.SetPingTimeout(1 * time.Second)
 	opts.SetAutoReconnect(true)

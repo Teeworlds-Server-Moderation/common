@@ -100,18 +100,18 @@ func (p *Publisher) PublishTo(topic string, msg interface{}) {
 // a string channel that can be
 // address has the format: tcp://localhost:1883
 func NewPublisher(address, clientID, topic string) (*Publisher, error) {
-
+	clientID = uniqueClientID(clientID)
 	publisher := &Publisher{
 		address:    address,
-		clientID:   uniqueClientID(clientID),
+		clientID:   clientID,
 		topic:      topic,
 		client:     nil,
 		msgChannel: make(chan Message, 64),
 	}
 
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker(publisher.address)
-	opts.SetClientID(publisher.clientID)
+	opts.AddBroker(address)
+	opts.SetClientID(clientID)
 	opts.SetKeepAlive(10 * time.Second)
 	opts.SetPingTimeout(1 * time.Second)
 	opts.SetAutoReconnect(true)
