@@ -36,6 +36,6 @@ var (
 // as per MQTT specification
 func uniqueClientID(prefix string) string {
 
-	unique := prefix + uuid.New().Domain().String()
+	unique := prefix + "-" + uuid.New().String()
 	return unique[:23]
 }
