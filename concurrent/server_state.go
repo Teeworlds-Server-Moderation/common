@@ -39,7 +39,7 @@ func (ss *ServerState) PlayerLeave(ID int) dto.Player {
 }
 
 // GetState returns the current server state as a list of players sorted by their ID
-func (ss *ServerState) GetState() []dto.Player {
+func (ss *ServerState) GetState() dto.ServerState {
 	ss.mu.Lock()
 	players := make([]dto.Player, 0, len(ss.players))
 	for _, player := range ss.players {
@@ -48,7 +48,9 @@ func (ss *ServerState) GetState() []dto.Player {
 	ss.mu.Unlock()
 
 	sort.Sort(dto.PlayersSortByID(players))
-	return players
+	return dto.ServerState{
+		Players: players,
+	}
 }
 
 // GetPlayer fetches a specific Player state from the current server state.
