@@ -78,8 +78,8 @@ func NewSubscriber(address, clientID string, topics ...string) (*Subscriber, err
 	}
 
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker(address)
-	opts.SetClientID(clientID)
+	opts.AddBroker(subscriber.address)
+	opts.SetClientID(subscriber.clientID)
 	opts.SetKeepAlive(10 * time.Second)
 	opts.SetPingTimeout(1 * time.Second)
 	opts.SetAutoReconnect(true)

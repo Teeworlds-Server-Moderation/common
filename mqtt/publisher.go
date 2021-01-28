@@ -110,8 +110,8 @@ func NewPublisher(address, clientID, topic string) (*Publisher, error) {
 	}
 
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker(address)
-	opts.SetClientID(clientID)
+	opts.AddBroker(publisher.address)
+	opts.SetClientID(publisher.clientID)
 	opts.SetKeepAlive(10 * time.Second)
 	opts.SetPingTimeout(1 * time.Second)
 	opts.SetAutoReconnect(true)
