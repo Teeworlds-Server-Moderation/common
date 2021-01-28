@@ -71,7 +71,7 @@ func NewSubscriber(address, clientID string, topics ...string) (*Subscriber, err
 	}
 	subscriber := &Subscriber{
 		address:    address,
-		clientID:   clientID + "-subscriber",
+		clientID:   uniqueClientID(clientID),
 		topics:     topics,
 		client:     nil,
 		msgChannel: make(chan Message, 64),

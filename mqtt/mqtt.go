@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/google/uuid"
 )
 
 // this package can be used to define reading and writing routines that connect to the Mosquitto broker
@@ -30,3 +31,11 @@ var (
 		fmt.Println("attempting to reconnect")
 	}
 )
+
+// uniqueClientID creates a client ID that is unique and also not longer than 23 characters
+// as per MQTT specification
+func uniqueClientID(prefix string) string {
+
+	unique := prefix + uuid.New().Domain().String()
+	return unique[:23]
+}
