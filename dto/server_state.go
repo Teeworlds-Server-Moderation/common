@@ -18,3 +18,14 @@ func (ss *ServerState) Marshal() string {
 func (ss *ServerState) Unmarshal(payload string) error {
 	return json.Unmarshal([]byte(payload), ss)
 }
+
+// GetPlayerByID returns the requested ID
+func (ss *ServerState) GetPlayerByID(ID int) (Player, error) {
+	for _, player := range ss.Players {
+		if player.ID == ID {
+			return player, nil
+		}
+	}
+	return Player{}, ErrIDNotFound
+
+}
