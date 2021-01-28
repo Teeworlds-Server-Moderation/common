@@ -6,6 +6,9 @@ const (
 
 	// FROM SERVERS
 
+	// TypeError is returned from server monitors when they
+	// cannot answer the requests sent by the other microservices.
+	TypeError = "EVENT:ERROR"
 	// TypePlayerJoined is an event that is created by a monitor when a player joins a server
 	TypePlayerJoined = "EVENT:PLAYER_JOIN"
 	// TypePlayerLeft is created when a player leaves the server

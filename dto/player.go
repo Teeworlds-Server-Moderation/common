@@ -1,5 +1,7 @@
 package dto
 
+import "encoding/json"
+
 // Player is the object that represents a player
 //  with all of their information.
 type Player struct {
@@ -16,9 +18,13 @@ type Player struct {
 	Wins    int    `json:"wins,omitempty"`
 }
 
-// PlayersSortByID sort a list of player by their ID
-type PlayersSortByID []Player
+// Marshal creates a json string from the current struct
+func (p *Player) Marshal() string {
+	b, _ := json.Marshal(p)
+	return string(b)
+}
 
-func (a PlayersSortByID) Len() int           { return len(a) }
-func (a PlayersSortByID) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a PlayersSortByID) Less(i, j int) bool { return a[i].ID < a[j].ID }
+// Unmarshal fills the current struct with the unmarshalled values
+func (p *Player) Unmarshal(payload string) error {
+	return json.Unmarshal([]byte(payload), p)
+}
