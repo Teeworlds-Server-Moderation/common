@@ -35,7 +35,8 @@ var (
 // uniqueClientID creates a client ID that is unique and also not longer than 23 characters
 // as per MQTT specification
 func uniqueClientID(prefix string) string {
-
-	unique := prefix + "-" + uuid.New().String()
-	return unique[:23]
+	prefix = prefix + "-"
+	id := uuid.New().String()
+	unique := prefix + id[len(id)-23+len(prefix):]
+	return unique
 }
