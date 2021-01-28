@@ -42,9 +42,15 @@ const (
 	TypeAuthRcon = "EVENT:AUTH_RCON"
 	// TypePlayerDied is created when a player killed another player
 	TypePlayerDied = "EVENT:PLAYER_DIED"
+	// TypeServerState is created when a microservice requests the state of a server
+	// or when a server state change occurs.
+	TypeServerState = "EVENT:SERVER_STATE"
 
 	// TO SERVERS
 
-	// TypeCommandExec is used to forward command execution requests to the Teeworlds servers
-	TypeCommandExec = "EVENT:COMMAND_EXEC"
+	// TypeRequestCommandExec is used to forward command execution requests to the Teeworlds servers
+	TypeRequestCommandExec = "REQEST:COMMAND_EXEC"
+	// TypeRequestServerState is created when a specific microservice needs more data for
+	// an interaction with the server. For example listing the current player list.
+	TypeRequestServerState = "REQUEST:SERVER_STATE"
 )

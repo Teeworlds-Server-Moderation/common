@@ -29,6 +29,6 @@ func (pme *PlayerMutedEvent) Unmarshal(payload string) error {
 // NewPlayerMutedEvent create an empty event with a proper event type
 func NewPlayerMutedEvent() PlayerMutedEvent {
 	event := PlayerMutedEvent{}
-	event.Type = TypeCommandExec
+	event.Type = TypeRequestCommandExec
 	return event
 }
