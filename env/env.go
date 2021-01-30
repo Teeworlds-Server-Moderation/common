@@ -20,11 +20,8 @@ func GetEnv() map[string]string {
 	env := make(map[string]string, len(pairs))
 	for _, pair := range pairs {
 		keyPairs := strings.SplitN(pair, "=", 2)
-		if len(keyPairs) == 0 {
-			continue
-		} else if len(keyPairs) == 1 {
-			env[keyPairs[0]] = ""
-		} else {
+		if len(keyPairs) == 2 && keyPairs[1] != "" {
+			// do not care about variables that do not have a value
 			env[keyPairs[0]] = keyPairs[1]
 		}
 	}
@@ -48,6 +45,10 @@ func Get(filenames ...string) map[string]string {
 
 	env := GetEnv()
 	for key, value := range env {
+		// do not override values with empty values
+		if fileEnv[key] != "" && value == "" {
+			continue
+		}
 		fileEnv[key] = value
 	}
 	return fileEnv
