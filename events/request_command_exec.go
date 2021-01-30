@@ -10,9 +10,14 @@ type RequestCommandExecEvent struct {
 }
 
 // Marshal creates the proper JSON string representation of the current event
-func (cee *RequestCommandExecEvent) Marshal() string {
-	b, _ := json.Marshal(cee)
+func (rce *RequestCommandExecEvent) Marshal() string {
+	b, _ := json.Marshal(rce)
 	return string(b)
+}
+
+// Unmarshal fills the current struct with the unmarshalled values
+func (rce *RequestCommandExecEvent) Unmarshal(payload string) error {
+	return json.Unmarshal([]byte(payload), rce)
 }
 
 // NewRequestCommandExecEvent create an empty event with a proper event type
