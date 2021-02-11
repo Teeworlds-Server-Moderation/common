@@ -7,4 +7,5 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/joho/godotenv v1.3.0
 	github.com/jxsl13/simple-configo v1.2.4
+	github.com/streadway/amqp v1.0.0
 )
