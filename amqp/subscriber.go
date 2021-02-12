@@ -14,11 +14,11 @@ import (
 // until the Close() method has been called that cancels an internally wrapped context, which
 // immediatly terminates
 type Subscriber struct {
-	queue   string
-	conn    *amqp.Connection
-	channel *amqp.Channel
-	ctx     context.Context
-	cancel  func()
+	conn           *amqp.Connection
+	channel        *amqp.Channel
+	ctx            context.Context
+	cancel         func()
+	declaredQueues map[string]bool
 }
 
 // Close waits a second and then closes the client connection as well as the subsciber
@@ -35,20 +35,32 @@ func (s *Subscriber) Close() error {
 // Next blocks until the next message from the broker is received
 // the bool indicates that the subscriber was closed
 // you can use this in a for loop until ok is false, preferrably in an own goroutine
-func (s *Subscriber) Next() (<-chan amqp.Delivery, error) {
+func (s *Subscriber) Next(queue string) (<-chan amqp.Delivery, error) {
+	if err := s.createQueuesIfNotExists(queue); err != nil {
+		return nil, err
+	}
 	return s.channel.Consume(
-		s.queue, // queue
-		"",      // consumer
-		true,    // auto-ack
-		false,   // exclusive
-		false,   // no-local
-		false,   // no-wait
-		nil,     // args
+		queue, // queue
+		"",    // consumer
+		true,  // auto-ack
+		false, // exclusive
+		false, // no-local
+		false, // no-wait
+		nil,   // args
 	)
 }
 
-func (s *Subscriber) NextFromQueues(queues ...string) (<-chan amqp.Delivery, error) {
-	channels := make([]<-chan amqp.Delivery, len(queues))
+// NextFromMany subscribes to queues and return results in the returned channel
+// this should be used if more than one queue is being subscribed to, as the multiplexing of messages
+// creates an overhead of n+1 extra goroutines
+func (s *Subscriber) NextFromMany(queues ...string) (<-chan amqp.Delivery, error) {
+
+	// declare and cache
+	if err := s.createQueuesIfNotExists(queues...); err != nil {
+		return nil, err
+	}
+
+	deliveryChannels := make([]<-chan amqp.Delivery, len(queues))
 	for _, queue := range queues {
 		ch, err := s.channel.Consume(
 			queue, // queue
@@ -62,7 +74,7 @@ func (s *Subscriber) NextFromQueues(queues ...string) (<-chan amqp.Delivery, err
 		if err != nil {
 			return nil, err
 		}
-		channels = append(channels, ch)
+		deliveryChannels = append(deliveryChannels, ch)
 	}
 
 	// out will receive all messages from all subscription queues
@@ -70,13 +82,16 @@ func (s *Subscriber) NextFromQueues(queues ...string) (<-chan amqp.Delivery, err
 
 	// create a goroutine per subscription that pushes received messages
 	// into the out channel, fan in
-	for _, ch := range channels {
+	for _, ch := range deliveryChannels {
 
 		// for every created subscription channel do create a routine
-		go func(ctx context.Context, channel <-chan amqp.Delivery, out chan amqp.Delivery) {
+		go func(ctx context.Context, channel <-chan amqp.Delivery, out chan<- amqp.Delivery) {
 			for {
 				select {
-				case msg := <-channel:
+				case msg, ok := <-channel:
+					if !ok {
+						return
+					}
 					out <- msg
 				case <-ctx.Done():
 					return
@@ -100,27 +115,19 @@ func (s *Subscriber) NextFromQueues(queues ...string) (<-chan amqp.Delivery, err
 	return out, nil
 }
 
-func (s *Subscriber) createQueueIfNotExists(queue string) error {
-	_, err := s.channel.QueueDeclare(
-		queue, // name
-		true,  // durable
-		false, // delete when unused
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
-	)
-	return err
+func (s *Subscriber) createQueuesIfNotExists(queues ...string) error {
+	return createQueuesIfNotExists(s.declaredQueues, s.channel, queues...)
 }
 
 // NewSubscriber creates and starts a new subscriber that receives new messages via
 // a string channel that can be
-// address has the format: tcp://localhost:1883
-func NewSubscriber(queue, username, password, hostname string, port int, vhost ...string) (*Subscriber, error) {
+// address has the format: localhost:5672
+func NewSubscriber(address, username, password string, vhost ...string) (*Subscriber, error) {
 	vhoststr := ""
 	if len(vhost) > 0 {
 		vhoststr = vhost[0]
 	}
-	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%d/%s", username, password, hostname, port, vhoststr))
+	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s/%s", username, password, address, vhoststr))
 	if err != nil {
 		return nil, err
 	}
@@ -131,15 +138,11 @@ func NewSubscriber(queue, username, password, hostname string, port int, vhost .
 
 	ctx, cancel := context.WithCancel(context.Background())
 	subsciber := &Subscriber{
-		queue:   queue,
-		conn:    conn,
-		channel: ch,
-		ctx:     ctx,
-		cancel:  cancel,
+		conn:           conn,
+		channel:        ch,
+		ctx:            ctx,
+		cancel:         cancel,
+		declaredQueues: make(map[string]bool),
 	}
-
-	if queue != "" {
-		err = subsciber.createQueueIfNotExists(queue)
-	}
-	return subsciber, err
+	return subsciber, nil
 }

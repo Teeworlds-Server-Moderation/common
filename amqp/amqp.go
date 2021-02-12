@@ -1,1 +1,31 @@
 package amqp
+
+import "github.com/streadway/amqp"
+
+// common queue creation that is used for publisher and subscriber
+// if this function is different for any of the two, you may get problems with the protocol stack of amqp,
+// as you will get an error when declaring a que differently if a queue already exists.
+// Idempotence is only guaranteed if created and to be created queue configurations match.
+func createQueuesIfNotExists(cache map[string]bool, channel *amqp.Channel, queues ...string) error {
+
+	for _, queue := range queues {
+		// keep track of declared queues in order not to redeclare them
+		if _, ok := cache[queue]; ok {
+			return nil
+		}
+		// declare queue if unknown
+		_, err := channel.QueueDeclare(
+			queue, // name
+			true,  // durable
+			false, // delete when unused
+			false, // exclusive
+			false, // no-wait
+			nil,   // arguments
+		)
+
+		// update cache
+		cache[queue] = true
+		return err
+	}
+	return nil
+}

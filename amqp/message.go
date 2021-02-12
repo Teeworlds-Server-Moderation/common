@@ -29,12 +29,12 @@ func toString(i interface{}) string {
 		return strconv.FormatFloat(t, 'f', -1, 32)
 	case bool:
 		return strconv.FormatBool(t)
-	default:
-		b, err := json.Marshal(i)
-		if err != nil {
-			log.Panicf("Invalid type passed: %T", t)
-		}
-		return string(b)
+	case Message:
+		return t.Payload
 	}
-	return ""
+	b, err := json.Marshal(i)
+	if err != nil {
+		log.Panicf("Invalid type passed: %T", i)
+	}
+	return string(b)
 }
