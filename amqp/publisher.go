@@ -20,24 +20,31 @@ func (p *Publisher) Close() error {
 	return p.conn.Close()
 }
 
+// CreateExchange creates a new durable exchange
+func (p *Publisher) CreateExchange(exchange string) error {
+	return p.channel.ExchangeDeclare(
+		exchange,
+		"fanout",
+		true,
+		false,
+		false,
+		true,
+		nil,
+	)
+}
+
 // Publish allows to specify a different topic other than the default one.
-func (p *Publisher) Publish(queue string, msg interface{}) error {
-	if err := p.createQueuesIfNotExists(queue); err != nil {
-		return err
-	}
+// leave queue empty to only send to the queue
+func (p *Publisher) Publish(exchange, queue string, msg interface{}) error {
 	return p.channel.Publish(
-		"",    // exchange
-		queue, // routing key
-		false, // mandatory
-		false, // immediate
+		exchange, // exchange
+		queue,    // routing key
+		false,    // mandatory
+		false,    // immediate
 		amqp.Publishing{
 			ContentType: "application/json",
 			Body:        []byte(toString(msg)),
 		})
-}
-
-func (p *Publisher) createQueuesIfNotExists(queues ...string) error {
-	return createQueuesIfNotExists(p.channel, queues...)
 }
 
 // NewPublisher creates and starts a new Publisher that receives new messages via

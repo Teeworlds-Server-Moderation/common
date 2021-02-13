@@ -21,15 +21,29 @@ func TestPubSub(t *testing.T) {
 	}
 	defer sub.Close()
 
+	exchange := "exchange"
+	err = pub.CreateExchange(exchange)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	queue := "consumerQueue"
+	err = sub.CreateQueue(queue)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = sub.BindQueue(queue, exchange)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	size := 1000
-	queue := "test"
 	comparisonLookup := make([]int, 0, size)
 	for i := 0; i < size; i++ {
-		if err := pub.Publish(queue, i); err != nil {
+		if err := pub.Publish(exchange, "", i); err != nil {
 			t.Fatal(err)
 		}
 		comparisonLookup = append(comparisonLookup, i)
-
 	}
 
 	c, err := sub.Consume(queue)
@@ -52,24 +66,34 @@ func TestPubSub(t *testing.T) {
 		}
 	}
 
+	broadcast := "broadcast"
+	err = sub.CreateExchange(broadcast)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// also get messages from the second exchange
+	err = sub.BindQueue(queue, broadcast)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	expectedTest := make([]string, 0)
 	expectedBroadcast := make([]string, 0)
 	for i := 0; i < size; i++ {
 		if i%2 == 0 {
 			// as we did use test above already, we cannot reuse the "test" queue here!!!
 			expectedTest = append(expectedTest, toString(i))
-			if err := pub.Publish("test-2", i); err != nil {
+			if err := pub.Publish(exchange, "", i); err != nil {
 				t.Fatal(err)
 			}
 		} else {
 			expectedBroadcast = append(expectedBroadcast, toString(i))
-			if err := pub.Publish("broadcast", i); err != nil {
+			if err := pub.Publish(broadcast, "", i); err != nil {
 				t.Fatal(err)
 			}
 		}
 	}
-
-	c, err = sub.ConsumeMany("test-2", "broadcast")
 
 	for i := 0; i < size; i++ {
 		select {
