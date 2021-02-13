@@ -14,23 +14,25 @@ func TestPubSub(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer pub.Close()
 	sub, err := NewSubscriber(credentials())
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer sub.Close()
 
 	size := 1000
 	queue := "test"
 	comparisonLookup := make([]int, 0, size)
 	for i := 0; i < size; i++ {
-		if err := pub.PublishTo(queue, i); err != nil {
+		if err := pub.Publish(queue, i); err != nil {
 			t.Fatal(err)
 		}
 		comparisonLookup = append(comparisonLookup, i)
 
 	}
 
-	c, err := sub.Next(queue)
+	c, err := sub.Consume(queue)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,13 +56,20 @@ func TestPubSub(t *testing.T) {
 	expectedBroadcast := make([]string, 0)
 	for i := 0; i < size; i++ {
 		if i%2 == 0 {
+			// as we did use test above already, we cannot reuse the "test" queue here!!!
 			expectedTest = append(expectedTest, toString(i))
+			if err := pub.Publish("test-2", i); err != nil {
+				t.Fatal(err)
+			}
 		} else {
 			expectedBroadcast = append(expectedBroadcast, toString(i))
+			if err := pub.Publish("broadcast", i); err != nil {
+				t.Fatal(err)
+			}
 		}
 	}
 
-	c, err = sub.NextFromMany("test", "broadcast")
+	c, err = sub.ConsumeMany("test-2", "broadcast")
 
 	for i := 0; i < size; i++ {
 		select {

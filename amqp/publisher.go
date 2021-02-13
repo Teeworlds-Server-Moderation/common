@@ -7,10 +7,8 @@ import (
 )
 
 type Publisher struct {
-	queue          string
-	conn           *amqp.Connection
-	channel        *amqp.Channel
-	declaredQueues map[string]bool
+	conn    *amqp.Connection
+	channel *amqp.Channel
 }
 
 // Close waits a second and then closes the client connection as well as the subsciber
@@ -22,8 +20,8 @@ func (p *Publisher) Close() error {
 	return p.conn.Close()
 }
 
-// PublishTo allows to specify a different topic other than the default one.
-func (p *Publisher) PublishTo(queue string, msg interface{}) error {
+// Publish allows to specify a different topic other than the default one.
+func (p *Publisher) Publish(queue string, msg interface{}) error {
 	if err := p.createQueuesIfNotExists(queue); err != nil {
 		return err
 	}
@@ -39,7 +37,7 @@ func (p *Publisher) PublishTo(queue string, msg interface{}) error {
 }
 
 func (p *Publisher) createQueuesIfNotExists(queues ...string) error {
-	return createQueuesIfNotExists(p.declaredQueues, p.channel, queues...)
+	return createQueuesIfNotExists(p.channel, queues...)
 }
 
 // NewPublisher creates and starts a new Publisher that receives new messages via
@@ -60,9 +58,8 @@ func NewPublisher(address, username, password string, vhost ...string) (*Publish
 	}
 
 	publisher := &Publisher{
-		declaredQueues: make(map[string]bool, 1), // you want to at least publish to one queue
-		conn:           conn,
-		channel:        ch,
+		conn:    conn,
+		channel: ch,
 	}
 
 	return publisher, err

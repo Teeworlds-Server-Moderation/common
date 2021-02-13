@@ -6,13 +6,9 @@ import "github.com/streadway/amqp"
 // if this function is different for any of the two, you may get problems with the protocol stack of amqp,
 // as you will get an error when declaring a que differently if a queue already exists.
 // Idempotence is only guaranteed if created and to be created queue configurations match.
-func createQueuesIfNotExists(cache map[string]bool, channel *amqp.Channel, queues ...string) error {
+func createQueuesIfNotExists(channel *amqp.Channel, queues ...string) error {
 
 	for _, queue := range queues {
-		// keep track of declared queues in order not to redeclare them
-		if _, ok := cache[queue]; ok {
-			return nil
-		}
 		// declare queue if unknown
 		_, err := channel.QueueDeclare(
 			queue, // name
@@ -22,9 +18,6 @@ func createQueuesIfNotExists(cache map[string]bool, channel *amqp.Channel, queue
 			false, // no-wait
 			nil,   // arguments
 		)
-
-		// update cache
-		cache[queue] = true
 		return err
 	}
 	return nil

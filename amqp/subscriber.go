@@ -7,22 +7,19 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// Subscriber wraps the mqtt client that is subscribed to a specific topic
-// in a pretty simple to use manner.
-// initially you connect to your broker and fetch reveived messages with the method
-// Next(). Next() is a blocking call that waits for a channel to contain a message or
-// until the Close() method has been called that cancels an internally wrapped context, which
-// immediatly terminates
+// Subscriber wraps the amqp client that is subscribed to one or more specific queues
+// You can subscribe to different topics, but MUST NOT subscribe to the same topic multiple times,
+// e.g. once with the Next method and another time with the NextromMany method.
+// If you want overlapping queue subscriptions, create a second subscriber
 type Subscriber struct {
-	conn           *amqp.Connection
-	channel        *amqp.Channel
-	ctx            context.Context
-	cancel         func()
-	declaredQueues map[string]bool
+	conn        *amqp.Connection
+	channel     *amqp.Channel
+	ctx         context.Context
+	cancel      func()
+	knownQueues map[string]bool
 }
 
-// Close waits a second and then closes the client connection as well as the subsciber
-// and all internally used channels
+// Close closes the channel, the connection and the go channels that pass the data.
 func (s *Subscriber) Close() error {
 	defer s.cancel()
 	err := s.channel.Close()
@@ -32,10 +29,13 @@ func (s *Subscriber) Close() error {
 	return s.conn.Close()
 }
 
-// Next blocks until the next message from the broker is received
-// the bool indicates that the subscriber was closed
-// you can use this in a for loop until ok is false, preferrably in an own goroutine
-func (s *Subscriber) Next(queue string) (<-chan amqp.Delivery, error) {
+// Consume returns a channel that can be used to retrieve all received messages fro the passed queue
+func (s *Subscriber) Consume(queue string) (<-chan amqp.Delivery, error) {
+	if ok := s.knownQueues[queue]; ok {
+		panic(fmt.Sprintf("Must not resubscribe to the same queue again: %s", queue))
+	}
+	s.knownQueues[queue] = true
+
 	if err := s.createQueuesIfNotExists(queue); err != nil {
 		return nil, err
 	}
@@ -50,18 +50,23 @@ func (s *Subscriber) Next(queue string) (<-chan amqp.Delivery, error) {
 	)
 }
 
-// NextFromMany subscribes to queues and return results in the returned channel
+// ConsumeMany subscribes to queues and return results in the returned channel
 // this should be used if more than one queue is being subscribed to, as the multiplexing of messages
 // creates an overhead of n+1 extra goroutines
-func (s *Subscriber) NextFromMany(queues ...string) (<-chan amqp.Delivery, error) {
+func (s *Subscriber) ConsumeMany(queues ...string) (<-chan amqp.Delivery, error) {
 
 	// declare and cache
 	if err := s.createQueuesIfNotExists(queues...); err != nil {
 		return nil, err
 	}
 
-	deliveryChannels := make([]<-chan amqp.Delivery, len(queues))
+	deliveryChannels := make([]<-chan amqp.Delivery, 0, len(queues))
 	for _, queue := range queues {
+		if ok := s.knownQueues[queue]; ok {
+			panic(fmt.Sprintf("Must not resubscribe to the same queue again: %s", queue))
+		}
+		s.knownQueues[queue] = true
+
 		ch, err := s.channel.Consume(
 			queue, // queue
 			"",    // consumer
@@ -116,12 +121,14 @@ func (s *Subscriber) NextFromMany(queues ...string) (<-chan amqp.Delivery, error
 }
 
 func (s *Subscriber) createQueuesIfNotExists(queues ...string) error {
-	return createQueuesIfNotExists(s.declaredQueues, s.channel, queues...)
+	return createQueuesIfNotExists(s.channel, queues...)
 }
 
-// NewSubscriber creates and starts a new subscriber that receives new messages via
-// a string channel that can be
+// NewSubscriber creates and starts a new subscriber that can Consume from a single of ConsumeMany queues.
 // address has the format: localhost:5672
+// You can subscribe to different topics, but MUST NOT subscribe to the same topic multiple times,
+// e.g. once with the Next method and another time with the NextromMany method.
+// If you want overlapping queue subscriptions, create a second subscriber
 func NewSubscriber(address, username, password string, vhost ...string) (*Subscriber, error) {
 	vhoststr := ""
 	if len(vhost) > 0 {
@@ -138,11 +145,11 @@ func NewSubscriber(address, username, password string, vhost ...string) (*Subscr
 
 	ctx, cancel := context.WithCancel(context.Background())
 	subsciber := &Subscriber{
-		conn:           conn,
-		channel:        ch,
-		ctx:            ctx,
-		cancel:         cancel,
-		declaredQueues: make(map[string]bool),
+		conn:        conn,
+		channel:     ch,
+		ctx:         ctx,
+		cancel:      cancel,
+		knownQueues: make(map[string]bool),
 	}
 	return subsciber, nil
 }
