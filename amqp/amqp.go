@@ -13,7 +13,7 @@ func createQueuesIfNotExists(channel *amqp.Channel, queues ...string) error {
 		_, err := channel.QueueDeclare(
 			queue, // name
 			true,  // durable
-			false, // delete when unused
+			true,  // delete when unused
 			false, // exclusive
 			false, // no-wait
 			nil,   // arguments
