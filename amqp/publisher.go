@@ -2,19 +2,39 @@ package amqp
 
 import (
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/streadway/amqp"
 )
 
 type Publisher struct {
-	conn    *amqp.Connection
-	channel *amqp.Channel
+	publisherBase
+	mu sync.Mutex
 }
 
-// Close waits a second and then closes the client connection as well as the subsciber
+type publisherBase struct {
+	address  string
+	username string
+	password string
+	vhost    string
+	conn     *amqp.Connection
+	channel  *amqp.Channel
+}
+
+// Close closes the client connection as well as the subsciber
 // and all internally used channels
+// Close closes the channel, the connection and the go channels that pass the data.
 func (p *Publisher) Close() error {
-	if err := p.channel.Close(); err != nil {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.unguardedClose()
+}
+
+func (p *Publisher) unguardedClose() error {
+
+	err := p.channel.Close()
+	if err != nil {
 		return err
 	}
 	return p.conn.Close()
@@ -22,6 +42,27 @@ func (p *Publisher) Close() error {
 
 // CreateExchange creates a new durable exchange
 func (p *Publisher) CreateExchange(exchange string) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	err := p.channel.ExchangeDeclare(
+		exchange,
+		"fanout",
+		true,
+		false,
+		false,
+		true,
+		nil,
+	)
+	if err == nil {
+		return nil
+	}
+
+	err = p.reconnect(ReconnectTimeout)
+	if err != nil {
+		return err
+	}
+	// reconnect succeeded
 	return p.channel.ExchangeDeclare(
 		exchange,
 		"fanout",
@@ -36,6 +77,28 @@ func (p *Publisher) CreateExchange(exchange string) error {
 // Publish allows to specify a different topic other than the default one.
 // leave queue empty to only send to the queue
 func (p *Publisher) Publish(exchange, queue string, msg interface{}) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	err := p.channel.Publish(
+		exchange, // exchange
+		queue,    // routing key
+		false,    // mandatory
+		false,    // immediate
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        []byte(toString(msg)),
+		})
+	if err == nil {
+		return nil
+	}
+
+	err = p.reconnect(ReconnectTimeout)
+	if err != nil {
+		return err
+	}
+	// reconnect succeeded
+
 	return p.channel.Publish(
 		exchange, // exchange
 		queue,    // routing key
@@ -45,6 +108,25 @@ func (p *Publisher) Publish(exchange, queue string, msg interface{}) error {
 			ContentType: "application/json",
 			Body:        []byte(toString(msg)),
 		})
+}
+
+func (p *Publisher) reconnect(timeout time.Duration) error {
+	end := time.Now().Add(timeout)
+
+	var err error
+	var newPub *Publisher
+	for time.Now().Before(end) {
+		newPub, err = NewPublisher(p.address, p.username, p.password, p.vhost)
+		if err != nil {
+			time.Sleep(time.Millisecond * 500)
+			continue
+		}
+		p.unguardedClose() // ignore errors
+		p.publisherBase = *&newPub.publisherBase
+		return nil
+	}
+	// failed
+	return err
 }
 
 // NewPublisher creates and starts a new Publisher that receives new messages via
@@ -65,8 +147,14 @@ func NewPublisher(address, username, password string, vhost ...string) (*Publish
 	}
 
 	publisher := &Publisher{
-		conn:    conn,
-		channel: ch,
+		publisherBase: publisherBase{
+			address:  address,
+			username: username,
+			password: password,
+			vhost:    vhoststr,
+			conn:     conn,
+			channel:  ch,
+		},
 	}
 
 	return publisher, err

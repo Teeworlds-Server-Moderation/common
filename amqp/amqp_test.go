@@ -55,7 +55,14 @@ func TestPubSub(t *testing.T) {
 		select {
 		case <-time.After(time.Second * 5):
 			t.Fatal("Timeouted after 5 seconds")
-		case msg := <-c:
+		case msg, ok := <-c:
+			if !ok {
+				// reconnect on unexpected channe closure
+				c, err = sub.Consume(queue)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
 			got := string(msg.Body)
 
 			if toString(expected) != got {
@@ -99,7 +106,14 @@ func TestPubSub(t *testing.T) {
 		select {
 		case <-time.After(time.Second * 5):
 			t.Fatal("Timeouted after 5 seconds #2")
-		case msg := <-c:
+		case msg, ok := <-c:
+			if !ok {
+				// reconnect on unexpected channel closure
+				c, err = sub.Consume(queue)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
 			got := string(msg.Body)
 
 			if len(expectedTest) > 0 && expectedTest[0] == got {
