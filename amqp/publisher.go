@@ -118,7 +118,7 @@ func (p *Publisher) reconnect(timeout time.Duration) error {
 	for time.Now().Before(end) {
 		newPub, err = NewPublisher(p.address, p.username, p.password, p.vhost)
 		if err != nil {
-			time.Sleep(time.Millisecond * 500)
+			time.Sleep(ReconnectDelay)
 			continue
 		}
 		p.unguardedClose() // ignore errors
@@ -137,11 +137,24 @@ func NewPublisher(address, username, password string, vhost ...string) (*Publish
 	if len(vhost) > 0 {
 		vhoststr = vhost[0]
 	}
-	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s/%s", username, password, address, vhoststr))
-	if err != nil {
-		return nil, err
+	var err error
+	var conn *amqp.Connection
+	var ch *amqp.Channel
+
+	end := time.Now().Add(InitialReconnectTimeout)
+	for time.Now().Before(end) {
+		conn, err = amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s/%s", username, password, address, vhoststr))
+		if err != nil {
+			time.Sleep(ReconnectDelay)
+			continue
+		}
+		ch, err = conn.Channel()
+		if err != nil {
+			time.Sleep(ReconnectDelay)
+			continue
+		}
+		break
 	}
-	ch, err := conn.Channel()
 	if err != nil {
 		return nil, err
 	}

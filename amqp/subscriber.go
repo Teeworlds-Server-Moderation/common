@@ -183,7 +183,7 @@ func (s *Subscriber) reconnect(timeout time.Duration) error {
 	for time.Now().Before(end) {
 		newSub, err = NewSubscriber(s.address, s.username, s.password, s.vhost)
 		if err != nil {
-			time.Sleep(time.Millisecond * 500)
+			time.Sleep(ReconnectDelay)
 			continue
 		}
 		s.unguardedClose() // ignore errors
@@ -204,11 +204,25 @@ func NewSubscriber(address, username, password string, vhosts ...string) (*Subsc
 	if len(vhosts) > 0 {
 		vhoststr = vhosts[0]
 	}
-	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s/%s", username, password, address, vhoststr))
-	if err != nil {
-		return nil, err
+
+	var err error
+	var conn *amqp.Connection
+	var ch *amqp.Channel
+
+	end := time.Now().Add(InitialReconnectTimeout)
+	for time.Now().Before(end) {
+		conn, err = amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s/%s", username, password, address, vhoststr))
+		if err != nil {
+			time.Sleep(ReconnectDelay)
+			continue
+		}
+		ch, err = conn.Channel()
+		if err != nil {
+			time.Sleep(ReconnectDelay)
+			continue
+		}
+		break
 	}
-	ch, err := conn.Channel()
 	if err != nil {
 		return nil, err
 	}
