@@ -9,8 +9,9 @@ import (
 // Message is a simple struct that allows to publish to different topics
 // with a single publisher client connection
 type Message struct {
-	Queue   string
-	Payload string
+	Exchange string
+	Queue    string
+	Payload  string
 }
 
 func toString(i interface{}) string {
