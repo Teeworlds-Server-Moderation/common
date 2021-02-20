@@ -35,6 +35,7 @@ func (ss *ServerState) PlayerLeave(ID int) dto.Player {
 	defer ss.mu.Unlock()
 	player := ss.players[ID]
 	delete(ss.players, ID)
+	player.ID = ID
 	return player
 }
 
