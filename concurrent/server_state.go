@@ -11,6 +11,7 @@ import (
 // is monitoring an dparsing the logs of that specific server.
 type ServerState struct {
 	mu      sync.Mutex
+	Map     string
 	players map[int]dto.Player
 }
 
@@ -69,6 +70,7 @@ func (ss *ServerState) GetState() dto.ServerState {
 
 	sort.Sort(dto.PlayersSortByID(players))
 	return dto.ServerState{
+		Map:     ss.Map,
 		Players: players,
 	}
 }
@@ -78,4 +80,19 @@ func (ss *ServerState) GetPlayer(ID int) dto.Player {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 	return ss.players[ID]
+}
+
+// GetMap returns the currently played map. If it's empty, the map has not yet been changed in
+// order to be visible in here.
+func (ss *ServerState) GetMap() string {
+	ss.mu.Lock()
+	defer ss.mu.Unlock()
+	return ss.Map
+}
+
+// SetMap updats the currently played map on the server.
+func (ss *ServerState) SetMap(newMap string) {
+	ss.mu.Lock()
+	defer ss.mu.Unlock()
+	ss.Map = newMap
 }
