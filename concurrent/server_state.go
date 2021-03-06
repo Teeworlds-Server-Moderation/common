@@ -39,6 +39,25 @@ func (ss *ServerState) PlayerLeave(ID int) dto.Player {
 	return player
 }
 
+// PlayerLeaveAll removes all players that are currently on the server from the server
+// and returns a list with these players.
+// This function is useful for when a map change happens and all players are disconnected for
+// a short amount of time and during this time they may leave the server, as they do not like the map.
+// In order to catch that state, players should be removed from the online player list during map changes
+func (ss *ServerState) PlayerLeaveAll() []dto.Player {
+	ss.mu.Lock()
+	defer ss.mu.Unlock()
+
+	players := make([]dto.Player, 0, len(ss.players))
+	for id, player := range ss.players {
+		players = append(players, player)
+		delete(ss.players, id)
+	}
+
+	sort.Sort(dto.PlayersSortByID(players))
+	return players
+}
+
 // GetState returns the current server state as a list of players sorted by their ID
 func (ss *ServerState) GetState() dto.ServerState {
 	ss.mu.Lock()
