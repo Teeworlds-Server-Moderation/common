@@ -30,6 +30,6 @@ func (pbe *PlayerDiedEvent) Unmarshal(payload string) error {
 // NewPlayerDiedEvent create an empty event with a proper event type
 func NewPlayerDiedEvent() PlayerDiedEvent {
 	event := PlayerDiedEvent{}
-	event.Type = TypePlayerDied
+	event.BaseEvent = NewBaseEventTimestamped(TypePlayerDied)
 	return event
 }

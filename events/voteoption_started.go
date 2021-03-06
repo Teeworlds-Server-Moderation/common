@@ -32,6 +32,6 @@ func (vose *VoteOptionStartedEvent) Unmarshal(payload string) error {
 // NewVoteOptionStartedEvent create an empty event with a proper event type
 func NewVoteOptionStartedEvent() VoteOptionStartedEvent {
 	event := VoteOptionStartedEvent{}
-	event.Type = TypeVoteOptionStarted
+	event.BaseEvent = NewBaseEventTimestamped(TypeVoteOptionStarted)
 	return event
 }

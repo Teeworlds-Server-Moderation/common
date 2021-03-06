@@ -27,6 +27,6 @@ func (ple *PlayerLeftEvent) Unmarshal(payload string) error {
 // NewPlayerLeftEvent create an empty event with a proper event type
 func NewPlayerLeftEvent() PlayerLeftEvent {
 	event := PlayerLeftEvent{}
-	event.Type = TypePlayerLeft
+	event.BaseEvent = NewBaseEventTimestamped(TypePlayerLeft)
 	return event
 }

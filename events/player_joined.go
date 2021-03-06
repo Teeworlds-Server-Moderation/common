@@ -26,6 +26,6 @@ func (pje *PlayerJoinedEvent) Unmarshal(payload string) error {
 // NewPlayerJoinedEvent create an empty event with a proper event type
 func NewPlayerJoinedEvent() PlayerJoinedEvent {
 	event := PlayerJoinedEvent{}
-	event.Type = TypePlayerJoined
+	event.BaseEvent = NewBaseEventTimestamped(TypePlayerJoined)
 	return event
 }

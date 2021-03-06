@@ -32,6 +32,6 @@ func (vkse *VoteKickStartedEvent) Unmarshal(payload string) error {
 // NewVoteKickStartedEvent create an empty event with a proper event type
 func NewVoteKickStartedEvent() VoteKickStartedEvent {
 	event := VoteKickStartedEvent{}
-	event.Type = TypeVoteKickStarted
+	event.BaseEvent = NewBaseEventTimestamped(TypeVoteKickStarted)
 	return event
 }

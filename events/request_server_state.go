@@ -27,6 +27,6 @@ func (rss *RequestServerStateEvent) Unmarshal(payload string) error {
 // NewRequestServerStateEvent create an empty event with a proper event type
 func NewRequestServerStateEvent() RequestServerStateEvent {
 	event := RequestServerStateEvent{}
-	event.Type = TypeRequestServerState
+	event.BaseEvent = NewBaseEventTimestamped(TypeRequestServerState)
 	return event
 }

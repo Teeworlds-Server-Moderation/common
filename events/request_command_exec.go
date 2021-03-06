@@ -23,6 +23,6 @@ func (rce *RequestCommandExecEvent) Unmarshal(payload string) error {
 // NewRequestCommandExecEvent create an empty event with a proper event type
 func NewRequestCommandExecEvent() RequestCommandExecEvent {
 	event := RequestCommandExecEvent{}
-	event.Type = TypeRequestCommandExec
+	event.BaseEvent = NewBaseEventTimestamped(TypeRequestCommandExec)
 	return event
 }

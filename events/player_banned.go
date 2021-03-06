@@ -29,6 +29,6 @@ func (pbe *PlayerBannedEvent) Unmarshal(payload string) error {
 // NewPlayerBannedEvent create an empty event with a proper event type
 func NewPlayerBannedEvent() PlayerBannedEvent {
 	event := PlayerBannedEvent{}
-	event.Type = TypePlayerBanned
+	event.BaseEvent = NewBaseEventTimestamped(TypePlayerBanned)
 	return event
 }

@@ -27,6 +27,6 @@ func (sse *ServerStateEvent) Unmarshal(payload string) error {
 // NewServerStateEvent create an empty event with a proper event type
 func NewServerStateEvent() ServerStateEvent {
 	event := ServerStateEvent{}
-	event.Type = TypeServerState
+	event.BaseEvent = NewBaseEventTimestamped(TypeServerState)
 	return event
 }

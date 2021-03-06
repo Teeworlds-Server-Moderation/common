@@ -27,6 +27,6 @@ func (pke *PlayerKickedEvent) Unmarshal(payload string) error {
 // NewPlayerKickedEvent create an empty event with a proper event type
 func NewPlayerKickedEvent() PlayerKickedEvent {
 	event := PlayerKickedEvent{}
-	event.Type = TypePlayerKicked
+	event.BaseEvent = NewBaseEventTimestamped(TypePlayerKicked)
 	return event
 }

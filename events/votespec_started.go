@@ -30,6 +30,6 @@ func (vsse *VoteSpecStartedEvent) Unmarshal(payload string) error {
 // NewVoteSpecStartedEvent create an empty event with a proper event type
 func NewVoteSpecStartedEvent() VoteSpecStartedEvent {
 	event := VoteSpecStartedEvent{}
-	event.Type = TypeVoteSpecStarted
+	event.BaseEvent = NewBaseEventTimestamped(TypeVoteSpecStarted)
 	return event
 }
