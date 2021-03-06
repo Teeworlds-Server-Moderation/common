@@ -5,6 +5,7 @@ import "encoding/json"
 // ServerState is a representation of the current server state
 // This dto can be sent every time something happens to the server state.
 type ServerState struct {
+	Map     string   `json:"map,omitempty"`
 	Players []Player `json:"players"`
 }
 
