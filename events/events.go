@@ -45,6 +45,8 @@ const (
 	// TypeServerState is created when a microservice requests the state of a server
 	// or when a server state change occurs.
 	TypeServerState = "EVENT:SERVER_STATE"
+	//TypeMapChanged is created when the current map is changed to a new one.
+	TypeMapChanged = "EVENT:MAP_CHANGED"
 
 	// TO SERVERS
 
