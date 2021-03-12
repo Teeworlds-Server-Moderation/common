@@ -86,8 +86,9 @@ func (p *Publisher) Publish(exchange, queue string, msg interface{}) error {
 		false,    // mandatory
 		false,    // immediate
 		amqp.Publishing{
-			ContentType: "application/json",
-			Body:        []byte(toString(msg)),
+			DeliveryMode: amqp.Persistent,
+			ContentType:  "application/json",
+			Body:         []byte(toString(msg)),
 		})
 	if err == nil {
 		return nil
@@ -105,8 +106,9 @@ func (p *Publisher) Publish(exchange, queue string, msg interface{}) error {
 		false,    // mandatory
 		false,    // immediate
 		amqp.Publishing{
-			ContentType: "application/json",
-			Body:        []byte(toString(msg)),
+			DeliveryMode: amqp.Persistent,
+			ContentType:  "application/json",
+			Body:         []byte(toString(msg)),
 		})
 }
 
