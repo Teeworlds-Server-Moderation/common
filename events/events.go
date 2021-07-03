@@ -35,7 +35,7 @@ const (
 	// TypePlayerBanned is created when someone is banned from the server.
 	TypePlayerBanned = "EVENT:PLAYER_BANNED"
 	// TypePlayerVoteBanned is created when a player receives a voteban from an admin/moderator.
-	TypePlayerVoteBanned = "EVENT_PLAYER_VOTEBANNED"
+	TypePlayerVoteBanned = "EVENT:PLAYER_VOTEBANNED"
 	// TypeAuthEcon is created when someone logs into econ.
 	TypeAuthEcon = "EVENT:AUTH_ECON"
 	// TypeAuthRcon is created when a player logs into the rcon.
