@@ -111,6 +111,35 @@ func (s *Subscriber) CreateQueue(queue string) error {
 	return err
 }
 
+// DeleteQueue creates a queue that is initially bound to the default exchange
+func (s *Subscriber) DeleteQueue(queue string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	_, err := s.channel.QueueDelete(
+		queue,
+		true,
+		false,
+		false,
+	)
+	if err == nil {
+		return nil
+	}
+
+	err = s.reconnect(ReconnectTimeout)
+	if err != nil {
+		return err
+	}
+	// reconnect succeeded
+	_, err = s.channel.QueueDelete(
+		queue,
+		true,
+		false,
+		false,
+	)
+	return err
+}
+
 // BindQueue to an exchange
 func (s *Subscriber) BindQueue(queue, exchange string) error {
 	s.mu.Lock()
