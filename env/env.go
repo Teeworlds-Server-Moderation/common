@@ -63,7 +63,7 @@ func Get(filenames ...string) map[string]string {
 // filenames is an optional parameter, if it is left empty, the underlying library will try
 // to open the .env file in the same directory first and then parse those values
 // afterwards the environment variables override any value from that file.
-func Parse(cfg configo.Config, filenames ...string) error {
-	env := Get(filenames...)
-	return configo.Parse(cfg, env)
+func Parse(filename string, cfg configo.Config) error {
+	env := Get(filename)
+	return configo.Parse(env, cfg)
 }

@@ -2,70 +2,37 @@ package amqp
 
 import (
 	"fmt"
-	"sync"
+	"strings"
 	"time"
 
-	"github.com/streadway/amqp"
+	"github.com/houseofcat/turbocookedrabbit/v2/pkg/tcr"
+)
+
+const (
+	deliveryModePersistent = 2
 )
 
 type Publisher struct {
-	publisherBase
-	mu sync.Mutex
-}
-
-type publisherBase struct {
-	address  string
-	username string
-	password string
-	vhost    string
-	conn     *amqp.Connection
-	channel  *amqp.Channel
+	cp  *tcr.ConnectionPool
+	pub *tcr.Publisher
+	top *tcr.Topologer
 }
 
 // Close closes the client connection as well as the subsciber
 // and all internally used channels
 // Close closes the channel, the connection and the go channels that pass the data.
 func (p *Publisher) Close() error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	return p.unguardedClose()
-}
-
-func (p *Publisher) unguardedClose() error {
-
-	err := p.channel.Close()
-	if err != nil {
-		return err
-	}
-	return p.conn.Close()
+	p.pub.Shutdown(false)
+	p.cp.Shutdown()
+	return nil
 }
 
 // CreateExchange creates a new durable exchange
 func (p *Publisher) CreateExchange(exchange string) error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	err := p.channel.ExchangeDeclare(
+	return p.top.CreateExchange(
 		exchange,
 		"fanout",
-		true,
 		false,
-		false,
-		true,
-		nil,
-	)
-	if err == nil {
-		return nil
-	}
-
-	err = p.reconnect(ReconnectTimeout)
-	if err != nil {
-		return err
-	}
-	// reconnect succeeded
-	return p.channel.ExchangeDeclare(
-		exchange,
-		"fanout",
 		true,
 		false,
 		false,
@@ -77,58 +44,20 @@ func (p *Publisher) CreateExchange(exchange string) error {
 // Publish allows to specify a different topic other than the default one.
 // leave queue empty to only send to the queue
 func (p *Publisher) Publish(exchange, queue string, msg interface{}) error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	err := p.channel.Publish(
-		exchange, // exchange
-		queue,    // routing key
-		false,    // mandatory
-		false,    // immediate
-		amqp.Publishing{
-			DeliveryMode: amqp.Persistent,
-			ContentType:  "application/json",
-			Body:         []byte(toString(msg)),
-		})
-	if err == nil {
-		return nil
-	}
-
-	err = p.reconnect(ReconnectTimeout)
-	if err != nil {
-		return err
-	}
-	// reconnect succeeded
-
-	return p.channel.Publish(
-		exchange, // exchange
-		queue,    // routing key
-		false,    // mandatory
-		false,    // immediate
-		amqp.Publishing{
-			DeliveryMode: amqp.Persistent,
-			ContentType:  "application/json",
-			Body:         []byte(toString(msg)),
-		})
-}
-
-func (p *Publisher) reconnect(timeout time.Duration) error {
-	end := time.Now().Add(timeout)
-
-	var err error
-	var newPub *Publisher
-	for time.Now().Before(end) {
-		newPub, err = NewPublisher(p.address, p.username, p.password, p.vhost)
-		if err != nil {
-			time.Sleep(ReconnectDelay)
-			continue
-		}
-		p.unguardedClose() // ignore errors
-		p.publisherBase = *&newPub.publisherBase
-		return nil
-	}
-	// failed
-	return err
+	p.pub.PublishWithConfirmation(
+		&tcr.Letter{
+			Body: []byte(toString(msg)),
+			Envelope: &tcr.Envelope{
+				Exchange:     exchange,
+				RoutingKey:   queue,
+				Mandatory:    false,
+				Immediate:    false,
+				ContentType:  "application/json",
+				DeliveryMode: deliveryModePersistent,
+			},
+		}, time.Minute)
+	receipt := <-p.pub.PublishReceipts()
+	return receipt.Error
 }
 
 // NewPublisher creates and starts a new Publisher that receives new messages via
@@ -137,40 +66,29 @@ func (p *Publisher) reconnect(timeout time.Duration) error {
 func NewPublisher(address, username, password string, vhost ...string) (*Publisher, error) {
 	vhoststr := ""
 	if len(vhost) > 0 {
-		vhoststr = vhost[0]
+		vhoststr = strings.TrimLeft(vhost[0], "/")
 	}
-	var err error
-	var conn *amqp.Connection
-	var ch *amqp.Channel
 
-	end := time.Now().Add(InitialReconnectTimeout)
-	for time.Now().Before(end) {
-		conn, err = amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s/%s", username, password, address, vhoststr))
-		if err != nil {
-			time.Sleep(ReconnectDelay)
-			continue
-		}
-		ch, err = conn.Channel()
-		if err != nil {
-			time.Sleep(ReconnectDelay)
-			continue
-		}
-		break
-	}
+	cp, err := tcr.NewConnectionPool(&tcr.PoolConfig{
+		URI:                fmt.Sprintf("amqp://%s:%s@%s/%s", username, password, address, vhoststr),
+		MaxConnectionCount: 5,
+		ConnectionTimeout:  10,
+	})
 	if err != nil {
 		return nil, err
 	}
+	top := tcr.NewTopologer(cp)
 
-	publisher := &Publisher{
-		publisherBase: publisherBase{
-			address:  address,
-			username: username,
-			password: password,
-			vhost:    vhoststr,
-			conn:     conn,
-			channel:  ch,
-		},
-	}
+	pub := tcr.NewPublisher(
+		cp,
+		0,
+		0,
+		5000*time.Second,
+	)
 
-	return publisher, err
+	return &Publisher{
+		cp,
+		pub,
+		top,
+	}, nil
 }
