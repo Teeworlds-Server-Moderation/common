@@ -1,8 +1,6 @@
 package amqp
 
 import (
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/houseofcat/turbocookedrabbit/v2/pkg/tcr"
@@ -64,16 +62,8 @@ func (p *Publisher) Publish(exchange, queue string, msg interface{}) error {
 // a string channel that can be
 // address has the format: localhost:5672
 func NewPublisher(address, username, password string, vhost ...string) (*Publisher, error) {
-	vhoststr := ""
-	if len(vhost) > 0 {
-		vhoststr = strings.TrimLeft(vhost[0], "/")
-	}
 
-	cp, err := tcr.NewConnectionPool(&tcr.PoolConfig{
-		URI:                fmt.Sprintf("amqp://%s:%s@%s/%s", username, password, address, vhoststr),
-		MaxConnectionCount: 5,
-		ConnectionTimeout:  10,
-	})
+	cp, err := newConnectionPool(username, password, address, vhost...)
 	if err != nil {
 		return nil, err
 	}

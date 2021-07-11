@@ -1,9 +1,6 @@
 package amqp
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/houseofcat/turbocookedrabbit/v2/pkg/tcr"
 )
 
@@ -113,16 +110,7 @@ func (s *Subscriber) Consume(queue string) (<-chan *tcr.ReceivedMessage, error) 
 // e.g. once with the Next method and another time with the NextromMany method.
 // If you want overlapping queue subscriptions, create a second subscriber
 func NewSubscriber(address, username, password string, vhost ...string) (*Subscriber, error) {
-	vhoststr := ""
-	if len(vhost) > 0 {
-		vhoststr = strings.TrimLeft(vhost[0], "/")
-	}
-
-	cp, err := tcr.NewConnectionPool(&tcr.PoolConfig{
-		URI:                fmt.Sprintf("amqp://%s:%s@%s/%s", username, password, address, vhoststr),
-		MaxConnectionCount: 5,
-		ConnectionTimeout:  10,
-	})
+	cp, err := newConnectionPool(username, password, address, vhost...)
 	if err != nil {
 		return nil, err
 	}
